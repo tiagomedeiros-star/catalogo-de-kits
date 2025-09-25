@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Kits de Telemetria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .kit-card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .kit-card:hover {
+            transform: translateY(-5px);
+        }
+        .modal {
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal.is-active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-background {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            transform: scale(0.95);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal.is-active .modal-content {
+            transform: scale(1);
+        }
+        .tag {
+            border-radius: 9999px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .category-icon {
+            font-size: 1.5rem;
+        }
+        /* Ajuste do layout de grade para uniformidade */
+        .kits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            align-items: stretch;
+        }
+        .kit-card .client-list,
+        .kit-card .materials-list {
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* Limita a 3 linhas */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+
+    <!-- Header Section -->
+    <header class="bg-white shadow-md py-4 px-6 md:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between">
+            <h1 class="text-3xl font-bold text-gray-800 mb-4 md:mb-0">Catálogo de Kits</h1>
+            <div class="flex flex-col md:flex-row items-center w-full md:w-auto space-y-4 md:space-y-0 md:space-x-4">
+                <input 
+                    type="text" id="searchInput" placeholder="Buscar kit, cliente ou material..." class="w-full md:w-80 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button id="addKitBtn" class="w-full md:w-auto px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    + Adicionar Kit
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Filter Tabs -->
+        <div class="flex flex-wrap justify-center mb-8 space-x-2 sm:space-x-4">
+            <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors bg-indigo-500 text-white hover:bg-indigo-600" data-category="Todos">Todos</button>
+            <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors bg-white text-gray-700 hover:bg-gray-200" data-category="Telemetria CAN">Telemetria CAN</button>
+            <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors bg-white text-gray-700 hover:bg-gray-200" data-category="Com Autenticação e Adicionais">Com Autenticação e Adicionais</button>
+            <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors bg-white text-gray-700 hover:bg-gray-200" data-category="Rastreamento Simples">Rastreamento Simples</button>
+            <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors bg-white text-gray-700 hover:bg-gray-200" data-category="Videomonitoramento">Videomonitoramento</button>
+            <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors bg-white text-gray-700 hover:bg-gray-200" data-category="Rastreamento Satelital">Rastreamento Satelital</button>
+        </div>
+
+        <!-- Kits Grid -->
+        <div id="kitsGrid" class="kits-grid">
+            <div id="loadingIndicator" class="col-span-full flex justify-center items-center py-10">
+                <div class="loader"></div>
+            </div>
+            <!-- Kit cards will be injected here by JavaScript -->
+        </div>
+
+        <div id="noResults" class="hidden text-center text-gray-500 text-lg mt-10">
+            Nenhum kit encontrado.
+        </div>
+    </main>
+
+    <!-- Modal for Adding/Editing Kits -->
+    <div id="kitModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 invisible">
+        <div class="modal-background absolute inset-0"></div>
+        <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-xl p-8 relative">
+            <button id="closeModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">&times;</button>
+            <h2 id="modalTitle" class="text-2xl font-bold text-center text-gray-800 mb-6">Adicionar Novo Kit</h2>
+      
+            <form id="kitForm" class="space-y-4">
+                <input type="hidden" id="kitId">
+                <div>
+                    <label for="kitName" class="block text-sm font-medium text-gray-700">Nome do Kit:</label>
+                    <input type="text" id="kitName" name="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="kitCode" class="block text-sm font-medium text-gray-700">Código Kit de Insumos:</label>
+                    <input type="text" id="kitCode" name="code" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="kitClients" class="block text-sm font-medium text-gray-700">Clientes (separados por vírgula):</label>
+                    <input type="text" id="kitClients" name="clients" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="kitMaterials" class="block text-sm font-medium text-gray-700">Materiais (separados por vírgula):</label>
+                    <textarea id="kitMaterials" name="materials" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2"></textarea>
+                </div>
+                <div>
+                    <label for="kitCategory" class="block text-sm font-medium text-gray-700">Categoria:</label>
+                    <select id="kitCategory" name="category" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                        <option value="Telemetria CAN">Telemetria CAN</option>
+                        <option value="Com Autenticação e Adicionais">Com Autenticação e Adicionais</option>
+                        <option value="Rastreamento Simples">Rastreamento Simples</option>
+                        <option value="Videomonitoramento">Videomonitoramento</option>
+                        <option value="Rastreamento Satelital">Rastreamento Satelital</option>
+                    </select>
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <button type="submit" class="w-full md:w-auto px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        Salvar Kit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Custom Dialog/Modal for Confirming Deletion (Replaces alert/confirm) -->
+    <div id="deleteConfirmModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 invisible">
+        <div class="modal-background absolute inset-0"></div>
+        <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 relative text-center">
+            <h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3>
+            <p class="text-gray-700 mb-6">Tem certeza de que deseja excluir este kit? Esta ação não pode ser desfeita.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="cancelDeleteBtn" class="px-6 py-2 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400">Cancelar</button>
+                <button id="confirmDeleteBtn" class="px-6 py-2 bg-red-600 text-white rounded-full hover:bg-red-700">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        // *** SUA CONFIGURAÇÃO DO FIREBASE (FORNECIDA POR VOCÊ) ***
+        const firebaseConfig = {
+          apiKey: "AIzaSyDBhMHWIjDyuY5tWx-OfuFHJyqmM_2ZV9s",
+          authDomain: "base-tipos-de-kits.firebaseapp.com",
+          projectId: "base-tipos-de-kits",
+          storageBucket: "base-tipos-de-kits.firebasestorage.app",
+          messagingSenderId: "231021886586",
+          appId: "1:231021886586:web:d8a70b5be77f7cead34fc3",
+          measurementId: "G-WV04JPNNQW"
+        };
+        // Adicionando o databaseURL que é necessário para o Realtime Database
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const kitsRef = ref(database, 'kits');
+
+        // Referências ao DOM
+        const kitsGrid = document.getElementById('kitsGrid');
+        const searchInput = document.getElementById('searchInput');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const noResultsMessage = document.getElementById('noResults');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        const kitModal = document.getElementById('kitModal');
+        const addKitBtn = document.getElementById('addKitBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const kitForm = document.getElementById('kitForm');
+        const kitNameInput = document.getElementById('kitName');
+        const kitCodeInput = document.getElementById('kitCode');
+        const kitClientsInput = document.getElementById('kitClients');
+        const kitMaterialsTextarea = document.getElementById('kitMaterials');
+        const kitCategorySelect = document.getElementById('kitCategory');
+        const modalTitle = document.getElementById('modalTitle');
+        const kitIdInput = document.getElementById('kitId');
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        
+        let kitsData = []; // Agora, este array será preenchido pelo Firebase
+        let kitToDeleteId = null;
+        let currentFilter = 'Todos';
+
+        const categoryMap = {
+            "Telemetria CAN": { icon: "🚛", color: "bg-blue-200" },
+            "Com Autenticação e Adicionais": { icon: "🚨", color: "bg-red-200" },
+            "Rastreamento Simples": { icon: "📍", color: "bg-green-200" },
+            "Videomonitoramento": { icon: "🎥", color: "bg-purple-200" },
+            "Rastreamento Satelital": { icon: "🛰️", color: "bg-yellow-200" }
+        };
+
+        // Função para renderizar os cartões dos kits
+        function renderKits(filteredKits) {
+            kitsGrid.innerHTML = '';
+            loadingIndicator.classList.add('hidden');
+            if (filteredKits.length === 0) {
+                noResultsMessage.classList.remove('hidden');
+                return;
+            }
+            noResultsMessage.classList.add('hidden');
+
+            filteredKits.forEach(kit => {
+                const card = document.createElement('div');
+                const categoryInfo = categoryMap[kit.category] || { icon: '❓', color: 'bg-gray-200' };
+                card.className = `kit-card relative bg-white rounded-xl p-6 flex flex-col justify-between ${categoryInfo.color}`;
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="category-icon text-4xl">${categoryInfo.icon}</span>
+                        <div class="flex space-x-2">
+                            <button onclick="editKit('${kit.id}')" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-semibold hover:bg-gray-300">Editar</button>
+                            <button onclick="showDeleteConfirm('${kit.id}')" class="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-semibold hover:bg-red-600">Excluir</button>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">${kit.name}</h3>
+                        <div class="space-y-1 text-sm text-gray-600">
+                            <p class="flex items-center"><span class="font-bold mr-2 text-gray-800">📌</span> <span class="text-xs tag bg-gray-300 text-gray-800">Kit de insumos: ${kit.code}</span></p>
+                            <p class="flex items-start"><span class="font-bold mr-2 text-gray-800">👥</span> <span class="client-list">${kit.clients}</span></p>
+                            <p class="flex items-start"><span class="font-bold mr-2 text-gray-800">🛠️</span> <span class="materials-list">${Array.isArray(kit.materials) ? kit.materials.join(' • ') : kit.materials}</span></p>
+                            <p class="text-xs text-gray-500 mt-2"><span class="font-bold mr-1 text-gray-800">📅</span> Última Atualização: ${kit.lastUpdate}</p>
+                        </div>
+                    </div>
+                `;
+                kitsGrid.appendChild(card);
+            });
+        }
+
+        // Função de busca e filtro
+        function filterAndSearch() {
+            const query = searchInput.value.toLowerCase();
+            const filteredKits = kitsData.filter(kit => {
+                const materialsString = Array.isArray(kit.materials) ? kit.materials.join(' ') : kit.materials;
+                const matchesCategory = currentFilter === 'Todos' || kit.category === currentFilter;
+                const matchesSearch = kit.name.toLowerCase().includes(query) ||
+                                      kit.clients.toLowerCase().includes(query) ||
+                                      materialsString.toLowerCase().includes(query);
+                return matchesCategory && matchesSearch;
+            });
+            renderKits(filteredKits);
+        }
+
+        // Event Listeners para a interface
+        searchInput.addEventListener('input', filterAndSearch);
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => {
+                    b.classList.replace('bg-indigo-500', 'bg-white');
+                    b.classList.replace('text-white', 'text-gray-700');
+                    b.classList.add('hover:bg-gray-200');
+                });
+                btn.classList.replace('bg-white', 'bg-indigo-500');
+                btn.classList.replace('text-gray-700', 'text-white');
+                btn.classList.remove('hover:bg-gray-200');
+                currentFilter = btn.dataset.category;
+                filterAndSearch();
+            });
+        });
+
+        // Modal de Adição/Edição
+        addKitBtn.addEventListener('click', () => {
+            modalTitle.textContent = 'Adicionar Novo Kit';
+            kitForm.reset();
+            kitIdInput.value = '';
+            kitModal.classList.add('is-active');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            kitModal.classList.remove('is-active');
+        });
+
+        kitForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            
+            const newKit = {
+                name: kitNameInput.value,
+                code: kitCodeInput.value,
+                clients: kitClientsInput.value,
+                materials: kitMaterialsTextarea.value.split(',').map(m => m.trim()).filter(m => m.length > 0),
+                lastUpdate: new Date().toLocaleDateString('pt-BR'),
+                category: kitCategorySelect.value,
+                icon: categoryMap[kitCategorySelect.value].icon
+            };
+
+            const kitId = kitIdInput.value;
+
+            if (kitId) {
+                // Lógica de Edição no Firebase
+                const kitToUpdateRef = ref(database, 'kits/' + kitId);
+                update(kitToUpdateRef, newKit);
+            } else {
+                // Lógica de Adição no Firebase
+                push(kitsRef, newKit);
+            }
+            
+            kitModal.classList.remove('is-active');
+            showCustomMessage('Kit salvo com sucesso!');
+        });
+
+        // Funções para Modais customizados
+        function showCustomMessage(message) {
+            const messageModal = document.createElement('div');
+            messageModal.className = 'modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 invisible is-active';
+            messageModal.innerHTML = `
+                <div class="modal-background absolute inset-0"></div>
+                <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-xs p-6 relative text-center">
+                    <h3 class="text-xl font-bold mb-4">Sucesso!</h3>
+                    <p class="text-gray-700 mb-6">${message}</p>
+                    <button class="px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700" onclick="closeCustomMessage(this)">OK</button>
+                </div>
+            `;
+            document.body.appendChild(messageModal);
+        }
+        
+        function closeCustomMessage(button) {
+            const modal = button.closest('.modal');
+            if (modal) {
+                modal.classList.remove('is-active');
+                setTimeout(() => modal.remove(), 300);
+            }
+        }
+        window.closeCustomMessage = closeCustomMessage;
+
+        // Funções de Edição e Exclusão
+        window.editKit = (id) => {
+            const kitToEdit = kitsData.find(kit => kit.id === id);
+            if (kitToEdit) {
+                modalTitle.textContent = 'Editar Kit';
+                kitIdInput.value = kitToEdit.id;
+                kitNameInput.value = kitToEdit.name;
+                kitCodeInput.value = kitToEdit.code;
+                kitClientsInput.value = kitToEdit.clients;
+                kitMaterialsTextarea.value = Array.isArray(kitToEdit.materials) ? kitToEdit.materials.join(', ') : kitToEdit.materials;
+                kitCategorySelect.value = kitToEdit.category;
+                kitModal.classList.add('is-active');
+            }
+        };
+
+        window.showDeleteConfirm = (id) => {
+            kitToDeleteId = id;
+            deleteConfirmModal.classList.add('is-active');
+        };
+
+        function hideDeleteConfirm() {
+            deleteConfirmModal.classList.remove('is-active');
+            kitToDeleteId = null;
+        }
+
+        cancelDeleteBtn.addEventListener('click', () => {
+            hideDeleteConfirm();
+        });
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (kitToDeleteId !== null) {
+                const kitToRemoveRef = ref(database, 'kits/' + kitToDeleteId);
+                remove(kitToRemoveRef)
+                    .then(() => {
+                        showCustomMessage('Kit excluído com sucesso!');
+                    })
+                    .catch(error => {
+                        console.error("Erro ao excluir kit: ", error);
+                        showCustomMessage('Erro ao excluir kit.');
+                    });
+                hideDeleteConfirm();
+            }
+        });
+
+        // *** Conexão em tempo real com o Firebase ***
+        onValue(kitsRef, (snapshot) => {
+            const data = snapshot.val();
+            kitsData = [];
+            if (data) {
+                for (const id in data) {
+                    kitsData.push({ id, ...data[id] });
+                }
+            }
+            // Filtra e renderiza os kits após cada atualização do banco de dados
+            filterAndSearch();
+        }, (error) => {
+            console.error("Erro ao ler dados do Firebase: ", error);
+            loadingIndicator.classList.add('hidden');
+            noResultsMessage.textContent = 'Erro ao carregar os dados. Verifique a sua conexão ou as regras do Firebase.';
+            noResultsMessage.classList.remove('hidden');
+        });
+
+    </script>
+</body>
+</html>
