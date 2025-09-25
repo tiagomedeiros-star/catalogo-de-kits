@@ -176,18 +176,33 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
+        // *** IMPORTANTE: REGRAS DE SEGURANÇA DO FIREBASE ***
+        // Por padrão, o Firebase Realtime Database exige autenticação para ler e escrever dados.
+        // Para que este catálogo funcione sem login, você precisa alterar as regras de segurança.
+        // 1. Vá para o seu console do Firebase > Realtime Database > Aba "Regras".
+        // 2. Substitua o conteúdo atual por este:
+        //    {
+        //      "rules": {
+        //        ".read": "true",
+        //        ".write": "true"
+        //      }
+        //    }
+        // 3. Clique em "Publicar".
+        // Esta é uma solução temporária para desenvolvimento. Para produção, é recomendado
+        // implementar um sistema de autenticação para proteger o seu banco de dados.
+
         // *** SUA CONFIGURAÇÃO DO FIREBASE (FORNECIDA POR VOCÊ) ***
         const firebaseConfig = {
           apiKey: "AIzaSyDBhMHWIjDyuY5tWx-OfuFHJyqmM_2ZV9s",
           authDomain: "base-tipos-de-kits.firebaseapp.com",
-          databaseURL: "https://base-tipos-de-kits-default-rtdb.firebaseio.com", // CORREÇÃO: databaseURL adicionado
+          databaseURL: "https://base-tipos-de-kits-default-rtdb.firebaseio.com",
           projectId: "base-tipos-de-kits",
           storageBucket: "base-tipos-de-kits.firebasestorage.app",
           messagingSenderId: "231021886586",
           appId: "1:231021886586:web:d8a70b5be77f7cead34fc3",
           measurementId: "G-WV04JPNNQW"
         };
-        // Adicionando o databaseURL que é necessário para o Realtime Database
+
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const kitsRef = ref(database, 'kits');
@@ -214,7 +229,7 @@
         const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
         const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
         
-        let kitsData = []; // Agora, este array será preenchido pelo Firebase
+        let kitsData = [];
         let kitToDeleteId = null;
         let currentFilter = 'Todos';
 
