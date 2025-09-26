@@ -44,14 +44,12 @@
         .category-icon {
             font-size: 1.5rem;
         }
-        /* Ajuste do layout de grade para uniformidade */
         .kits-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 1.5rem;
             align-items: stretch;
         }
-        /* Cartão de Grupo de Kit (nova vista de insumos) */
         .kit-group-card {
             cursor: pointer;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -66,7 +64,6 @@
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 2rem;
         }
-        /* Remove a limitação de linhas para exibir o conteúdo completo */
         .kit-card .client-list,
         .kit-card .materials-list {
             display: block;
@@ -91,7 +88,6 @@
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
-    <!-- Header Section -->
     <header class="bg-white shadow-md py-4 px-6 md:px-8">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between">
             <h1 class="text-3xl font-bold text-gray-800 mb-4 md:mb-0">Catálogo de Kits</h1>
@@ -111,17 +107,17 @@
                 <button id="addKitBtn" class="w-full md:w-auto px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden">
                     + Adicionar Kit
                 </button>
+                 <button id="addGroupBtn" class="w-full md:w-auto px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 hidden">
+                    + Adicionar Grupo
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Container -->
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <p id="authStatus" class="text-center text-sm text-gray-500 mb-4"></p>
         
-        <!-- VISTA 1: Catálogo de Kits -->
         <div id="catalogView">
-            <!-- Filter Tabs -->
             <div class="flex flex-wrap justify-center mb-8 space-x-2 sm:space-x-4" id="filterTabs">
                 <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors bg-indigo-500 text-white hover:bg-indigo-600" data-category="Todos">Todos</button>
                 <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors bg-white text-gray-700 hover:bg-gray-200" data-category="Telemetria CAN">Telemetria CAN</button>
@@ -130,38 +126,34 @@
                 <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors bg-white text-gray-700 hover:bg-gray-200" data-category="Videomonitoramento">Videomonitoramento</button>
                 <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors bg-white text-gray-700 hover:bg-gray-200" data-category="Rastreamento Satelital">Rastreamento Satelital</button>
             </div>
-
-            <!-- Kits Grid -->
             <div id="kitsGrid" class="kits-grid">
                 <div id="loadingIndicator" class="col-span-full flex justify-center items-center py-10">
                     <div class="loader"></div>
                 </div>
-                <!-- Kit cards will be injected here by JavaScript -->
             </div>
-
             <div id="noResults" class="hidden text-center text-gray-500 text-lg mt-10">
                 Nenhum kit encontrado.
             </div>
         </div>
         
-        <!-- VISTA 2: Kits de Insumos (Códigos) -->
         <div id="categoriesView" class="hidden">
             <h2 class="text-2xl font-bold text-gray-700 mb-4 text-center">Catálogo de Kits de Insumos por Código</h2>
             <p class="text-center text-gray-500 mb-8">Clique em um cartão para pesquisar kits com esse código de insumo no Catálogo Principal.</p>
-            <div id="categoriesGrid" class="group-grid">
-                <!-- Group cards will be injected here by JavaScript -->
+            <div id="categoriesGrid" class="group-grid"></div>
+             <div id="loadingGroupsIndicator" class="col-span-full flex justify-center items-center py-10">
+                <div class="loader"></div>
+            </div>
+            <div id="noGroupsResults" class="hidden text-center text-gray-500 text-lg mt-10">
+                Nenhum grupo de insumos encontrado.
             </div>
         </div>
-
     </main>
 
-    <!-- Modal for Adding/Editing Kits -->
     <div id="kitModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 invisible">
         <div class="modal-background absolute inset-0"></div>
         <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-xl p-8 relative">
             <button id="closeModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">&times;</button>
             <h2 id="modalTitle" class="text-2xl font-bold text-center text-gray-800 mb-6">Adicionar Novo Kit</h2>
-      
             <form id="kitForm" class="space-y-4">
                 <input type="hidden" id="kitId">
                 <div>
@@ -190,7 +182,6 @@
                         <option value="Rastreamento Satelital">Rastreamento Satelital</option>
                     </select>
                 </div>
-                
                 <div class="mt-6 text-center">
                     <button type="submit" class="w-full md:w-auto px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         Salvar Kit
@@ -199,13 +190,44 @@
             </form>
         </div>
     </div>
+
+    <div id="groupModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 invisible">
+        <div class="modal-background absolute inset-0"></div>
+        <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-xl p-8 relative">
+            <button id="closeGroupModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">&times;</button>
+            <h2 id="groupModalTitle" class="text-2xl font-bold text-center text-gray-800 mb-6">Adicionar Novo Grupo</h2>
+            <form id="groupForm" class="space-y-4">
+                <input type="hidden" id="groupId">
+                <div>
+                    <label for="groupCode" class="block text-sm font-medium text-gray-700">Código do Grupo:</label>
+                    <input type="text" id="groupCode" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="groupName" class="block text-sm font-medium text-gray-700">Nome do Grupo:</label>
+                    <input type="text" id="groupName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="groupKits" class="block text-sm font-medium text-gray-700">Kits Relacionados (separados por vírgula):</label>
+                    <textarea id="groupKits" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2"></textarea>
+                </div>
+                <div>
+                    <label for="groupMaterials" class="block text-sm font-medium text-gray-700">Insumos (separados por vírgula):</label>
+                    <textarea id="groupMaterials" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2"></textarea>
+                </div>
+                <div class="mt-6 text-center">
+                    <button type="submit" class="w-full md:w-auto px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors">
+                        Salvar Grupo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     
-    <!-- Custom Dialog/Modal for Confirming Deletion (Replaces alert/confirm) -->
     <div id="deleteConfirmModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 invisible">
         <div class="modal-background absolute inset-0"></div>
         <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 relative text-center">
             <h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3>
-            <p class="text-gray-700 mb-6">Tem certeza de que deseja excluir este kit? Esta ação não pode ser desfeita.</p>
+            <p class="text-gray-700 mb-6">Tem certeza de que deseja excluir este item? Esta ação não pode ser desfeita.</p>
             <div class="flex justify-center space-x-4">
                 <button id="cancelDeleteBtn" class="px-6 py-2 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400">Cancelar</button>
                 <button id="confirmDeleteBtn" class="px-6 py-2 bg-red-600 text-white rounded-full hover:bg-red-700">Excluir</button>
@@ -213,13 +235,11 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
         import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-        // --- Configuração do Firebase ---
         const firebaseConfig = {
           apiKey: "AIzaSyDBhMHWIjDyuY5tWx-OfuFHJyqmM_2ZV9s",
           authDomain: "base-tipos-de-kits.firebaseapp.com",
@@ -230,22 +250,16 @@
           appId: "1:231021886586:web:d8a70b5be77f7cead34fc3",
           measurementId: "G-WV04JPNNQW"
         };
-        const __initial_auth_token = ""; // Este token será fornecido pelo ambiente
-        const __app_id = "default-app-id"; // Este ID será fornecido pelo ambiente
 
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const auth = getAuth(app);
         const kitsRef = ref(database, 'kits');
-
-        // IMPORTANTE: COLOQUE SEU UID DE ADMINISTRADOR AQUI PARA HABILITAR EDIÇÃO.
-        // O valor atual é um PLACEHOLDER.
-        const adminUserId = "P6gJTvDDsXWRy1Wfnc5gssWJv782"; 
+        const kitGroupsRef = ref(database, 'kitGroups');
+        const adminUserId = "P6gJTvDDsXWRy1Wfnc5gssWJv782";
         
         // Referências ao DOM
-        const kitsGrid = document.getElementById('kitsGrid');
         const searchInput = document.getElementById('searchInput');
-        const filterTabs = document.getElementById('filterTabs');
         const filterBtns = document.querySelectorAll('.filter-btn');
         const noResultsMessage = document.getElementById('noResults');
         const loadingIndicator = document.getElementById('loadingIndicator');
@@ -262,326 +276,130 @@
         const kitModal = document.getElementById('kitModal');
         const closeModalBtn = document.getElementById('closeModalBtn');
         const kitForm = document.getElementById('kitForm');
-        const kitNameInput = document.getElementById('kitName');
-        const kitCodeInput = document.getElementById('kitCode');
-        const kitClientsInput = document.getElementById('kitClients');
-        const kitMaterialsTextarea = document.getElementById('kitMaterials');
-        const kitCategorySelect = document.getElementById('kitCategory');
         const modalTitle = document.getElementById('modalTitle');
         const kitIdInput = document.getElementById('kitId');
+        
         const deleteConfirmModal = document.getElementById('deleteConfirmModal');
         const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
         const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-        
+
+        const addGroupBtn = document.getElementById('addGroupBtn');
+        const groupModal = document.getElementById('groupModal');
+        const closeGroupModalBtn = document.getElementById('closeGroupModalBtn');
+        const groupForm = document.getElementById('groupForm');
+        const groupModalTitle = document.getElementById('groupModalTitle');
+        const groupIdInput = document.getElementById('groupId');
+
         let kitsData = [];
-        let kitToDeleteId = null;
+        let kitGroupsData = [];
+        let itemToDelete = null;
         let currentFilter = 'Todos';
         let isAdmin = false;
-        let currentView = 'catalog'; 
+        let currentView = 'catalog';
 
-        // Mapa de categorias genéricas ATUALIZADO com 🎥 e 🛰️
         const categoryMap = {
-            "Telemetria CAN": { icon: "🚛", color: "bg-blue-200", description: "Soluções de telemetria avançada com leitura de rede CAN (Controller Area Network) para dados detalhados do veículo." },
-            "Com Autenticação e Adicionais": { icon: "🚨", color: "bg-red-200", description: "Kits que incluem métodos de identificação de motorista (iButton, RFID) e acessórios extras de segurança ou operação." },
-            "Rastreamento Simples": { icon: "📍", color: "bg-green-200", description: "Soluções básicas e económicas focadas primariamente em localização GPS e ignição/velocidade." },
-            "Videomonitoramento": { icon: "🎥", color: "bg-purple-200", description: "Kits com câmaras, DVRs (Digital Video Recorders) ou MDVRs (Mobile DVRs) para vigilância a bordo e gestão de vídeo." },
-            "Rastreamento Satelital": { icon: "🛰️", color: "bg-yellow-200", description: "Para áreas sem cobertura de rede celular, utilizando comunicação por satélite (ex: Iridium, Globalstar)." }
-        };
-
-        // Dados FIXOS para a nova vista detalhada de grupos de insumos (Códigos),
-        // preenchidos com as informações fornecidas pelo usuário.
-        const kitGroupsData = {
-            '5.9': {
-                name: 'Telemetria com Autenticação e Adicionais (13.56/125khz)',
-                code: '5.9',
-                kits: [
-                    'Telemetria com Autenticação (13.56)',
-                    'Telemetria com Autenticação (125khz)',
-                    'Telemetria com Autenticação (13.56) e Botão de Pânico',
-                    'Telemetria com Autenticação (Multi-frequência)',
-                    'Telemetria com Autenticação (13.56) e Sensor de Violação',
-                    'Telemetria com Autenticação (13.56), Cofre e Botão de Pânico',
-                    'Telemetria com Autenticação (13.56) e VideoTelemetria'
-                ],
-                materials: ['Abraçadeiras G (4)', 'Abraçadeiras M (4)', 'Scothlock (4)', 'Adesivo "Não Violar" (2)'],
-                update: '13/03/2025',
-                color: 'bg-blue-100', 
-                icon: '📦'
-            },
-            '5.10': {
-                name: 'Telemetria com Rotograma e Adicionais',
-                code: '5.10',
-                kits: [
-                    'Telemetria com Autenticação (13.56) e Rotograma',
-                    'Telemetria com Autenticação (13.56), Rotograma e Botão de Pânico',
-                    'Telemetria com Autenticação (Ibutton), Inibidor de Partida, Rotograma e Sensores de Chuva e Ré'
-                ],
-                materials: ['Abraçadeiras G (6)', 'Abraçadeiras M (3)', 'Scothlock (6)', 'Adesivo "Não Violar" (2)'],
-                update: '13/03/2025',
-                color: 'bg-green-100',
-                icon: '📦'
-            },
-            '5.13': {
-                name: 'Telemetria com Cofre, Rotograma, Pânico e/ou Vídeo',
-                code: '5.13',
-                kits: [
-                    'Telemetria com Autenticação (13.56), Cofre, Rotograma e Botão de Pânico',
-                    'Telemetria com Autenticação (13.56), Cofre, Rotograma, Botão de Pânico e VideoTelemetria',
-                    'Telemetria com Autenticação (13.56), Rotograma, Botão de Pânico e VideoTelemetria'
-                ],
-                materials: ['Abraçadeiras G (6)', 'Abraçadeiras M (4)', 'Scothlock (4)', 'Adesivo "Não Violar" (4)'],
-                update: '13/03/2025',
-                color: 'bg-indigo-100',
-                icon: '📦'
-            },
-            '5.0': {
-                name: 'Telemetria com Autenticação, Bloqueio e/ou Violação',
-                code: '5.0',
-                kits: [
-                    'Telemetria com Autenticação (13.56) e Bloqueio',
-                    'Telemetria com Autenticação (13.56), Bloqueio e Botão de Pânico',
-                    'Telemetria com Autenticação (13.56), Sensor de Violação e Bloqueio'
-                ],
-                materials: ['Abraçadeiras G (5)', 'Abraçadeiras M (4)', 'Scothlock (3)', 'Adesivo "Não Violar" (2)'],
-                update: '13/03/2025',
-                color: 'bg-red-100',
-                icon: '📦'
-            },
-            '5.15': {
-                name: 'Telemetria CAN Avançada',
-                code: '5.15',
-                kits: [
-                    'Telemetria CAN com Bloqueio, Teclado de Desbloqueio e Sensor de Violação'
-                ],
-                materials: ['Abraçadeiras G (5)', 'Abraçadeiras M (6)', 'Scothlock (2)', 'Adesivo "Não Violar" (2)', 'Kit de Parafuso do Teclado de Desbloqueio'],
-                update: '13/03/2025',
-                color: 'bg-teal-100',
-                icon: '📦'
-            },
-            '5.3': {
-                name: 'Telemetria com Autenticação e Temperatura',
-                code: '5.3',
-                kits: [
-                    'Telemetria com Autenticação (125) e Temperatura'
-                ],
-                materials: ['Abraçadeiras G (14)', 'Abraçadeiras M (4)', 'Scothlock (3)'],
-                update: '13/03/2025',
-                color: 'bg-orange-100',
-                icon: '📦'
-            },
-            '5.14': {
-                name: 'Telemetria com Autenticação e GLP',
-                code: '5.14',
-                kits: [
-                    'Telemetria com Autenticação (125) e GLP'
-                ],
-                materials: ['Abraçadeiras G (4)', 'Abraçadeiras M (6)', 'Scothlock (3)', 'Adesivo "Não Violar" (2)'],
-                update: '13/03/2025',
-                color: 'bg-yellow-100',
-                icon: '📦'
-            },
-            '5.1': {
-                name: 'Telemetria Bluetooth/Rastreamento Simples (Autenticação/Bloqueio)',
-                code: '5.1',
-                kits: [
-                    'Telemetria com Autenticação via Bluetooth BCR, Beacon e Bloqueio',
-                    'Rastreamento Simples 2630MB com Autenticação (Ibutton) e Alarme'
-                ],
-                materials: ['Abraçadeiras G (4)', 'Abraçadeiras M (4)', 'Scothlock (3)'],
-                update: '13/03/2025',
-                color: 'bg-cyan-100',
-                icon: '📦'
-            },
-            '5.8': {
-                name: 'Telemetria Bino (Manual ou Bloqueio) ou Sem Autenticação',
-                code: '5.8',
-                kits: [
-                    'Telemetria com Autenticação via Bino e Bloqueio',
-                    'Telemetria com Autenticação via Bino manual',
-                    'Telemetria sem Leitor de Autenticação'
-                ],
-                materials: ['Abraçadeiras G (2)', 'Abraçadeiras M (4)', 'Scothlock (3)'],
-                update: '13/03/2025',
-                color: 'bg-fuchsia-100',
-                icon: '📦'
-            },
-            '5.2': {
-                name: 'Telemetria sem Autenticação e Vídeo',
-                code: '5.2',
-                kits: [
-                    'Telemetria sem Leitor de Autenticação e VideoTelemetria'
-                ],
-                materials: ['Abraçadeiras G (2)', 'Abraçadeiras M (4)', 'Scothlock (3)'],
-                update: '13/03/2025',
-                color: 'bg-rose-100',
-                icon: '📦'
-            },
-            '5.11': {
-                name: 'Rastreamento Simples (Temperatura e Módulo Controlador)',
-                code: '5.11',
-                kits: [
-                    'Rastreamento Simples com Temperatura e Módulo Controlador'
-                ],
-                materials: ['Abraçadeira G (2)', 'Abraçadeiras M (10)', 'Scothlock (2)', 'Álcool Swab (1)'],
-                update: '13/03/2025',
-                color: 'bg-lime-100',
-                icon: '📦'
-            },
-            '5.4': {
-                name: 'Rastreamento Simples (Diversos Modelos)',
-                code: '5.4',
-                kits: [
-                    'Rastreamento Simples com Teltonika',
-                    'Rastreamento Simples com GV50',
-                    'Rastreamento Simples com GV55',
-                    'Rastreamento Simples 2630 sem Bloqueio',
-                    'Rastreamento Simples com Teltonika e Bino Manual',
-                    'Rastreamento Simples 2630 com Bloqueio'
-                ],
-                materials: ['Abraçadeira G (3)', 'Scothlock (2)'],
-                update: '13/03/2025',
-                color: 'bg-emerald-100',
-                icon: '📦'
-            },
-            '5.5': {
-                name: 'Rastreamento Simples (FMB003)',
-                code: '5.5',
-                kits: [
-                    'Rastreamento Simples com FMB003 (Com ou sem Bino)'
-                ],
-                materials: ['Abraçadeira azul (1)', 'Abraçadeira G (2)', 'Abraçadeira M (2)'],
-                update: '13/03/2025',
-                color: 'bg-violet-100',
-                icon: '📦'
-            },
-            '5.12': {
-                name: 'VideoTelemetria (Kit de Materiais)',
-                code: '5.12',
-                kits: [
-                    'VideoTelemetria'
-                ],
-                materials: ['Abraçadeira G (5)', 'Scotchlok (3)', 'Álcool Swab (6)', 'Organizador de fios (3)', 'Adesivo "Não Violar" (2)'],
-                update: '13/03/2025',
-                color: 'bg-pink-100',
-                icon: '📦'
-            },
-            '5.7': {
-                name: 'Rastreamento Satelital',
-                code: '5.7',
-                kits: [
-                    'Satelital'
-                ],
-                materials: ['Abraçadeira G (2)', 'Abraçadeira M (2)'],
-                update: '13/03/2025',
-                color: 'bg-slate-100',
-                icon: '📦'
-            }
+            "Telemetria CAN": { icon: "🚛", color: "bg-blue-200" },
+            "Com Autenticação e Adicionais": { icon: "🚨", color: "bg-red-200" },
+            "Rastreamento Simples": { icon: "📍", color: "bg-green-200" },
+            "Videomonitoramento": { icon: "🎥", color: "bg-purple-200" },
+            "Rastreamento Satelital": { icon: "🛰️", color: "bg-yellow-200" }
         };
         
         // --- Lógica de Vistas (Pages) ---
         function showView(viewName, searchQuery = '') {
             currentView = viewName;
-
-            // Esconde todas as vistas
             catalogView.classList.add('hidden');
             categoriesView.classList.add('hidden');
             
-            // Oculta a área de busca e adição apenas na vista de grupos
-            searchAddArea.classList.toggle('hidden', viewName === 'groups');
-            
-            // Atualiza o estilo dos botões de navegação
-            showCatalogBtn.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
-            showCatalogBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
-            showGroupsBtn.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
-            showGroupsBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+            searchAddArea.classList.remove('hidden');
+            addKitBtn.classList.toggle('hidden', viewName !== 'catalog' || !isAdmin);
+            addGroupBtn.classList.toggle('hidden', viewName !== 'groups' || !isAdmin);
+
+            showCatalogBtn.classList.remove('bg-indigo-600', 'text-white');
+            showCatalogBtn.classList.add('bg-gray-200', 'text-gray-700');
+            showGroupsBtn.classList.remove('bg-indigo-600', 'text-white');
+            showGroupsBtn.classList.add('bg-gray-200', 'text-gray-700');
 
             if (viewName === 'catalog') {
                 catalogView.classList.remove('hidden');
-                showCatalogBtn.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
-                showCatalogBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
-                
-                // Aplica a busca ou filtro se for passado
+                showCatalogBtn.classList.add('bg-indigo-600', 'text-white');
+                showCatalogBtn.classList.remove('bg-gray-200', 'text-gray-700');
                 if (searchQuery) {
                      searchInput.value = searchQuery;
-                     applyFilter('Todos'); // Zera o filtro de categoria e aplica a busca
+                     applyFilter('Todos');
                 }
                 filterAndSearch();
             } else if (viewName === 'groups') {
                 categoriesView.classList.remove('hidden');
-                showGroupsBtn.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
-                showGroupsBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                showGroupsBtn.classList.add('bg-indigo-600', 'text-white');
+                showGroupsBtn.classList.remove('bg-gray-200', 'text-gray-700');
                 renderKitGroups();
             }
         }
 
         // --- Renderização dos Grupos de Insumos (Códigos) ---
         function renderKitGroups() {
-            categoriesGrid.innerHTML = '';
+            const grid = document.getElementById('categoriesGrid');
+            const loader = document.getElementById('loadingGroupsIndicator');
+            const noResults = document.getElementById('noGroupsResults');
             
-            // Converte o objeto para um array de grupos
-            const groups = Object.values(kitGroupsData);
+            grid.innerHTML = '';
+            loader.classList.add('hidden');
 
-            groups.forEach(group => {
+            if (kitGroupsData.length === 0) {
+                noResults.classList.remove('hidden');
+                return;
+            }
+            noResults.classList.add('hidden');
+
+            kitGroupsData.forEach(group => {
                 const card = document.createElement('div');
-                card.className = `kit-group-card relative bg-white rounded-xl p-6 flex flex-col justify-between ${group.color} border-b-4 border-indigo-600`;
+                card.className = `kit-group-card relative bg-white rounded-xl p-6 flex flex-col justify-between border-b-4 border-indigo-600`;
                 
-                // Define a função de clique para buscar pelo código de insumo no catálogo
-                card.onclick = () => showView('catalog', group.code);
-                
-                // A lista de kits relacionados deve ter um nome de seção
-                const kitsHtml = group.kits.map(kit => `<li class="truncate">✓ ${kit}</li>`).join('');
-                
-                // A lista de materiais deve ter um nome de seção
-                const materialsHtml = group.materials.map(material => `<li>✔ ${material}</li>`).join('');
+                const kitsHtml = Array.isArray(group.kits) ? group.kits.map(kit => `<li class="truncate">✓ ${kit}</li>`).join('') : '';
+                const materialsHtml = Array.isArray(group.materials) ? group.materials.map(material => `<li>✔ ${material}</li>`).join('') : '';
 
                 card.innerHTML = `
-                    <div class="flex justify-end items-center mb-4">
-                        <span class="text-xs text-gray-500">📅 Atualização: ${group.update}</span>
+                    <div>
+                        <div class="flex items-start justify-between mb-4">
+                            <span class="text-xs text-gray-500">📅 Atualização: ${group.update || 'N/A'}</span>
+                            ${isAdmin ? `
+                                <div class="flex space-x-2">
+                                    <button onclick="editGroup('${group.id}')" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-semibold hover:bg-gray-300">Editar</button>
+                                    <button onclick="showDeleteConfirm('${group.id}', 'group')" class="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-semibold hover:bg-red-600">Excluir</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <h3 class="text-2xl font-extrabold text-gray-800 mb-2">📦 Código ${group.code}</h3>
+                        <p class="text-sm font-semibold text-gray-700 mb-4">${group.name}</p>
+                        <div class="mb-4 flex-grow">
+                            <h4 class="font-bold text-gray-800 mb-2">Kits Relacionados:</h4>
+                            <ul class="text-sm text-gray-700 space-y-1 max-h-24 overflow-y-auto pr-2">${kitsHtml}</ul>
+                        </div>
+                        <div class="mb-4 border-t pt-4 border-gray-200">
+                            <h4 class="font-bold text-gray-800 mb-2">📦 Insumos:</h4>
+                            <ul class="text-sm text-gray-600 space-y-1">${materialsHtml}</ul>
+                        </div>
                     </div>
-                    <h3 class="text-2xl font-extrabold text-gray-800 mb-2">📦 Código ${group.code}</h3>
-                    <p class="text-sm font-semibold text-gray-700 mb-4">${group.name}</p>
-
-                    <div class="mb-4 flex-grow">
-                        <h4 class="font-bold text-gray-800 mb-2">Kits Relacionados:</h4>
-                        <ul class="text-sm text-gray-700 space-y-1 max-h-24 overflow-y-auto pr-2">
-                            ${kitsHtml}
-                        </ul>
-                    </div>
-                    
-                    <div class="mb-4 border-t pt-4 border-gray-200">
-                        <h4 class="font-bold text-gray-800 mb-2">📦 Insumos:</h4>
-                        <ul class="text-sm text-gray-600 space-y-1">
-                            ${materialsHtml}
-                        </ul>
-                    </div>
-
-                    <button class="mt-4 px-4 py-2 w-full bg-indigo-600 text-white rounded-full text-sm font-semibold hover:bg-indigo-700 transition-colors">
+                    <button class="mt-4 px-4 py-2 w-full bg-indigo-600 text-white rounded-full text-sm font-semibold hover:bg-indigo-700 transition-colors" onclick="event.stopPropagation(); showView('catalog', '${group.code}')">
                         Ver Kits no Catálogo (${group.code})
                     </button>
                 `;
-                categoriesGrid.appendChild(card);
+                grid.appendChild(card);
             });
         }
         
-        // --- Funções de Filtro do Catálogo ---
-
         function applyFilter(categoryName) {
             currentFilter = categoryName;
-            
-            // Atualiza a aparência dos botões de filtro
             filterBtns.forEach(b => {
                 const isSelected = b.dataset.category === categoryName;
                 b.classList.toggle('bg-indigo-500', isSelected);
                 b.classList.toggle('text-white', isSelected);
-                b.classList.toggle('hover:bg-indigo-600', isSelected);
-                
                 b.classList.toggle('bg-white', !isSelected);
                 b.classList.toggle('text-gray-700', !isSelected);
-                b.classList.toggle('hover:bg-gray-200', !isSelected);
             });
         }
 
-        // Função para renderizar os cartões dos kits (Vista Catálogo)
         function renderKits(filteredKits) {
             kitsGrid.innerHTML = '';
             loadingIndicator.classList.add('hidden');
@@ -590,228 +408,7 @@
                 return;
             }
             noResultsMessage.classList.add('hidden');
-
             filteredKits.forEach(kit => {
-                // Recupera o ícone específico da categoria (agora um emoji)
                 const categoryInfo = categoryMap[kit.category] || { icon: '❓', color: 'bg-gray-200' };
-                const card = document.createElement('div'); // Correção: card precisa ser declarado aqui
-                card.className = `kit-card relative bg-white rounded-xl p-6 flex flex-col justify-between ${categoryInfo.color}`;
-                card.innerHTML = `
-                    <div class="flex items-start justify-between mb-4">
-                        <span class="category-icon text-4xl">${categoryInfo.icon}</span> <!-- Usa o emoji específico da categoria -->
-                        ${isAdmin ? `
-                            <div class="flex space-x-2">
-                                <button onclick="editKit('${kit.id}')" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-semibold hover:bg-gray-300">Editar</button>
-                                <button onclick="showDeleteConfirm('${kit.id}')" class="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-semibold hover:bg-red-600">Excluir</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">${kit.name}</h3>
-                        <div class="space-y-1 text-sm text-gray-600">
-                            <p class="flex items-center"><span class="font-bold mr-2 text-gray-800">📌</span> <span class="text-xs tag bg-gray-300 text-gray-800">Kit de insumos: ${kit.code}</span></p>
-                            <p class="flex items-start"><span class="font-bold mr-2 text-gray-800">👥</span> <span class="client-list">${kit.clients}</span></p>
-                            <p class="flex items-start"><span class="font-bold mr-2 text-gray-800">🛠️</span> <span class="materials-list">${Array.isArray(kit.materials) ? kit.materials.join(' • ') : kit.materials}</span></p>
-                            <p class="text-xs text-gray-500 mt-2"><span class="font-bold mr-1 text-gray-800">📅</span> Última Atualização: ${kit.lastUpdate}</p>
-                        </div>
-                    </div>
-                `;
-                kitsGrid.appendChild(card);
-            });
-        }
-
-        // Função de busca e filtro
-        function filterAndSearch() {
-            const query = searchInput.value.toLowerCase();
-            const filteredKits = kitsData.filter(kit => {
-                const materialsString = Array.isArray(kit.materials) ? kit.materials.join(' ') : kit.materials;
-                const matchesCategory = currentFilter === 'Todos' || kit.category === currentFilter;
-                const matchesSearch = kit.name.toLowerCase().includes(query) ||
-                                      kit.clients.toLowerCase().includes(query) ||
-                                      materialsString.toLowerCase().includes(query) ||
-                                      kit.code.toLowerCase().includes(query); // Adicionado busca por código
-                return matchesCategory && matchesSearch;
-            });
-            renderKits(filteredKits);
-        }
-
-        // --- Event Listeners ---
-        searchInput.addEventListener('input', () => {
-            // Se o usuário digitar na busca, remove o filtro de categoria
-            applyFilter('Todos');
-            filterAndSearch();
-        });
-        
-        // Listener para os botões de navegação
-        showCatalogBtn.addEventListener('click', () => showView('catalog'));
-        showGroupsBtn.addEventListener('click', () => showView('groups'));
-
-        // Listener para os botões de filtro (no modo catálogo)
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                applyFilter(btn.dataset.category);
-                searchInput.value = ''; // Limpa a busca ao filtrar por categoria
-                filterAndSearch();
-            });
-        });
-
-        // Modal de Adição/Edição (lógica original)
-        addKitBtn.addEventListener('click', () => {
-            modalTitle.textContent = 'Adicionar Novo Kit';
-            kitForm.reset();
-            kitIdInput.value = '';
-            kitModal.classList.add('is-active');
-        });
-
-        closeModalBtn.addEventListener('click', () => {
-            kitModal.classList.remove('is-active');
-        });
-
-        kitForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-            
-            const selectedCategory = kitCategorySelect.value;
-            const newKit = {
-                name: kitNameInput.value,
-                code: kitCodeInput.value,
-                clients: kitClientsInput.value,
-                materials: kitMaterialsTextarea.value.split(',').map(m => m.trim()).filter(m => m.length > 0),
-                lastUpdate: new Date().toLocaleDateString('pt-BR'),
-                category: selectedCategory,
-                icon: categoryMap[selectedCategory].icon // Usa o ícone da categoria selecionada
-            };
-
-            const kitId = kitIdInput.value;
-
-            if (kitId) {
-                const kitToUpdateRef = ref(database, 'kits/' + kitId);
-                update(kitToUpdateRef, newKit);
-            } else {
-                push(kitsRef, newKit);
-            }
-            
-            kitModal.classList.remove('is-active');
-            showCustomMessage('Kit salvo com sucesso!');
-        });
-
-        // Funções para Modais customizados (lógica original)
-        function showCustomMessage(message) {
-            const messageModal = document.createElement('div');
-            messageModal.className = 'modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 invisible is-active';
-            messageModal.innerHTML = `
-                <div class="modal-background absolute inset-0"></div>
-                <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-xs p-6 relative text-center">
-                    <h3 class="text-xl font-bold mb-4">Sucesso!</h3>
-                    <p class="text-gray-700 mb-6">${message}</p>
-                    <button class="px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700" onclick="closeCustomMessage(this)">OK</button>
-                </div>
-            `;
-            document.body.appendChild(messageModal);
-        }
-        
-        function closeCustomMessage(button) {
-            const modal = button.closest('.modal');
-            if (modal) {
-                modal.classList.remove('is-active');
-                setTimeout(() => modal.remove(), 300);
-            }
-        }
-        window.closeCustomMessage = closeCustomMessage;
-
-        // Funções de Edição e Exclusão (lógica original)
-        window.editKit = (id) => {
-            if (!isAdmin) return;
-            const kitToEdit = kitsData.find(kit => kit.id === id);
-            if (kitToEdit) {
-                modalTitle.textContent = 'Editar Kit';
-                kitIdInput.value = kitToEdit.id;
-                kitNameInput.value = kitToEdit.name;
-                kitCodeInput.value = kitToEdit.code;
-                kitClientsInput.value = kitToEdit.clients;
-                kitMaterialsTextarea.value = Array.isArray(kitToEdit.materials) ? kitToEdit.materials.join(', ') : kitToEdit.materials;
-                kitCategorySelect.value = kitToEdit.category;
-                kitModal.classList.add('is-active');
-            }
-        };
-
-        window.showDeleteConfirm = (id) => {
-            if (!isAdmin) return;
-            kitToDeleteId = id;
-            deleteConfirmModal.classList.add('is-active');
-        };
-
-        function hideDeleteConfirm() {
-            deleteConfirmModal.classList.remove('is-active');
-            kitToDeleteId = null;
-        }
-
-        cancelDeleteBtn.addEventListener('click', () => {
-            hideDeleteConfirm();
-        });
-
-        confirmDeleteBtn.addEventListener('click', () => {
-            if (kitToDeleteId !== null) {
-                const kitToRemoveRef = ref(database, 'kits/' + kitToDeleteId);
-                remove(kitToRemoveRef)
-                    .then(() => {
-                        showCustomMessage('Kit excluído com sucesso!');
-                    })
-                    .catch(error => {
-                        console.error("Erro ao excluir kit: ", error);
-                        showCustomMessage('Erro ao excluir kit.');
-                    });
-                hideDeleteConfirm();
-            }
-        });
-
-        // Conexão em tempo real com o Firebase (lógica original)
-        onValue(kitsRef, (snapshot) => {
-            const data = snapshot.val();
-            kitsData = [];
-            if (data) {
-                for (const id in data) {
-                    kitsData.push({ id, ...data[id] });
-                }
-            }
-            // Chama o filtro e renderização após carregar os dados
-            filterAndSearch();
-        }, (error) => {
-            console.error("Erro ao ler dados do Firebase: ", error);
-            loadingIndicator.classList.add('hidden');
-            noResultsMessage.textContent = 'Erro ao carregar os dados. Verifique a sua conexão ou as regras do Firebase.';
-            noResultsMessage.classList.remove('hidden');
-        });
-
-        // Autenticação e verificação de administrador (lógica original)
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const userId = user.uid;
-                authStatusElement.textContent = `Logado. Seu User ID: ${userId}`;
-                isAdmin = userId === adminUserId;
-                if (isAdmin) {
-                    addKitBtn.classList.remove('hidden');
-                    authStatusElement.textContent += ' (Administrador)';
-                } else {
-                    addKitBtn.classList.add('hidden');
-                }
-            } else {
-                authStatusElement.textContent = 'Não logado. Tentando login anônimo...';
-                try {
-                    const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                    if (token) {
-                        await signInWithCustomToken(auth, token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch (error) {
-                    console.error("Erro de autenticação:", error);
-                    authStatusElement.textContent = `Erro de autenticação: ${error.code}. Por favor, verifique se o login anônimo está ativado no seu projeto Firebase.`;
-                }
-            }
-            // Garante que a vista inicial é o catálogo
-            showView('catalog');
-        });
-
-    </script>
-</body>
-</html>
+                const card = document.createElement('div');
+                card.className = `kit-card
